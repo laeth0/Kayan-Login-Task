@@ -1,5 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { IAuthDatabase } from '../frameworks/database/authDatabase.js';
+import { IAuthUseCase } from '../interfaces.js';
 
 export interface LoginCredentials {
     username: string;
@@ -13,12 +15,23 @@ export interface AuthResponse {
     message?: string;
 }
 
-export default function buildUseCases(database: any, jwtSecret: string) {
-    // Authentication use case
-    const loginEmployee = async (credentials: LoginCredentials): Promise<AuthResponse> => {
+
+export default class AuthUseCase implements IAuthUseCase {
+
+    private authRepo: IAuthDatabase;
+    private jwtSecret: string;
+
+    constructor(authRepo: IAuthDatabase, jwtSecret: string) {
+        this.authRepo = authRepo;
+        this.jwtSecret = jwtSecret;
+    }
+
+
+
+    async loginEmployee(credentials: LoginCredentials): Promise<AuthResponse> {
         try {
             // Find employee by username
-            const employee = await database.getEmployeeByUsername(credentials.username);
+            const employee = await this.authRepo.getEmployeeByUsername(credentials.username);
 
             if (!employee) {
                 return {
@@ -52,7 +65,7 @@ export default function buildUseCases(database: any, jwtSecret: string) {
                     username: employee.username,
                     companyId: employee.companyId
                 },
-                jwtSecret,
+                this.jwtSecret,
                 { expiresIn: '24h' }
             );
 
@@ -65,7 +78,7 @@ export default function buildUseCases(database: any, jwtSecret: string) {
                 employee: employeeData,
                 message: 'Login successful'
             };
-            
+
         } catch (error) {
             console.error('Login error:', error);
             return {
@@ -75,11 +88,10 @@ export default function buildUseCases(database: any, jwtSecret: string) {
         }
     };
 
-    // Register new employee
-    const registerEmployee = async (employeeData: any): Promise<any> => {
+    async registerEmployee(employeeData: any): Promise<any> {
         try {
             // Check if username already exists
-            const existingEmployee = await database.getEmployeeByUsername(employeeData.username);
+            const existingEmployee = await this.authRepo.getEmployeeByUsername(employeeData.username);
 
             if (existingEmployee) {
                 return {
@@ -89,7 +101,7 @@ export default function buildUseCases(database: any, jwtSecret: string) {
             }
 
             // Check if company exists
-            const company = await database.getCompanyById(employeeData.companyId);
+            const company = await this.authRepo.getCompanyById(employeeData.companyId);
             if (!company) {
                 return {
                     success: false,
@@ -101,7 +113,7 @@ export default function buildUseCases(database: any, jwtSecret: string) {
             const hashedPassword = await bcrypt.hash(employeeData.password, 10);
 
             // Create employee
-            const newEmployee = await database.createEmployee({
+            const newEmployee = await this.authRepo.createEmployee({
                 ...employeeData,
                 password: hashedPassword
             });
@@ -123,81 +135,6 @@ export default function buildUseCases(database: any, jwtSecret: string) {
         }
     };
 
-    // Company use cases
-    const getAllCompanies = async () => {
-        return await database.getAllCompanies();
-    };
-
-    const getCompanyById = async (id: number) => {
-        return await database.getCompanyById(id);
-    };
-
-    const createCompany = async (companyData: any) => {
-        return await database.createCompany(companyData);
-    };
-
-    const updateCompany = async (id: number, companyData: any) => {
-        return await database.updateCompany(id, companyData);
-    };
-
-    const deleteCompany = async (id: number) => {
-        return await database.deleteCompany(id);
-    };
-
-    // Employee use cases
-    const getAllEmployees = async () => {
-        const employees = await database.getAllEmployees();
-        // Remove passwords from response
-        return employees.map((emp: any) => {
-            const { password, ...employeeData } = emp;
-            return employeeData;
-        });
-    };
-
-    const getEmployeeById = async (id: number) => {
-        const employee = await database.getEmployeeById(id);
-        if (employee) {
-            const { password, ...employeeData } = employee;
-            return employeeData;
-        }
-        return null;
-    };
-
-    const getEmployeesByCompany = async (companyId: number) => {
-        const employees = await database.getEmployeesByCompany(companyId);
-        return employees.map((emp: any) => {
-            const { password, ...employeeData } = emp;
-            return employeeData;
-        });
-    };
-
-    const updateEmployee = async (id: number, employeeData: any) => {
-        // If password is being updated, hash it
-        if (employeeData.password) {
-            employeeData.password = await bcrypt.hash(employeeData.password, 10);
-        }
-        return await database.updateEmployee(id, employeeData);
-    };
-
-    const deleteEmployee = async (id: number) => {
-        return await database.deleteEmployee(id);
-    };
-
-    return {
-        // Auth
-        loginEmployee,
-        registerEmployee,
-        // Companies
-        getAllCompanies,
-        getCompanyById,
-        createCompany,
-        updateCompany,
-        deleteCompany,
-        // Employees
-        getAllEmployees,
-        getEmployeeById,
-        getEmployeesByCompany,
-        updateEmployee,
-        deleteEmployee,
-    };
 }
+
+// AuthUseCase now stands alone (SRP). Company and Employee logic moved to their own use case classes.

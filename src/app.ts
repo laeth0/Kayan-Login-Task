@@ -1,58 +1,44 @@
-// Main application entry point - Clean Architecture
 import projectDependinces from './config/projectDependinces.js';
-import buildIcdDatabase from './frameworks/database/icdDatabase.js';
-import buildUseCases from './usecase/IcdGroup/addICDGroup.js';
-import buildControllers from './controllers/Controllers.js';
-import buildRoutes from './frameworks/nodeExpress/icd.js';
-import buildExpressServer from './frameworks/nodeExpress/index.js';
+import apiRouter from './frameworks/nodeExpress/index.js';
 
-// Get project dependencies
+
 const dependencies = projectDependinces();
-const { DatabaseConnectionTools, port, jwt } = dependencies;
 
-// Get JWT secret from environment
-const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-key';
+const { port } = dependencies;
 
-// Initialize database layer
-const database = buildIcdDatabase(DatabaseConnectionTools.IcdDBpoolObj);
-console.log('✅ Database layer initialized');
+const app = dependencies.framework();
 
-// Initialize use cases (business logic)
-const useCases = buildUseCases(database, JWT_SECRET);
-console.log('✅ Use cases initialized');
+app.use(dependencies.cors());
+app.use(dependencies.framework.json());
+app.use(dependencies.framework.urlencoded({ extended: true }));
 
-// Initialize controllers
-const controllers = buildControllers(useCases);
-console.log('✅ Controllers initialized');
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+    next();
+});
 
-// Initialize routes
-const routes = buildRoutes(controllers);
-console.log('✅ Routes initialized');
+// API routes
+app.use('/api', apiRouter);
 
-// Start Express server
-const { app, server } = buildExpressServer(routes, port || 3000);
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-    console.log('\n⚠️  SIGTERM signal received: closing HTTP server');
-    server.close(() => {
-        console.log('✅ HTTP server closed');
-        DatabaseConnectionTools.IcdDBpoolObj.end(() => {
-            console.log('✅ Database connection closed');
-            process.exit(0);
-        });
+// 404 handler
+app.use((req, res) => {
+    res.status(404).json({
+        success: false,
+        message: 'Route not found'
     });
 });
 
-process.on('SIGINT', () => {
-    console.log('\n⚠️  SIGINT signal received: closing HTTP server');
-    server.close(() => {
-        console.log('✅ HTTP server closed');
-        DatabaseConnectionTools.IcdDBpoolObj.end(() => {
-            console.log('✅ Database connection closed');
-            process.exit(0);
-        });
-    });
+
+
+app.listen(port, () => {
+    console.log('\n========================================');
+    console.log('🚀 Server is running!');
+    console.log(`📡 Port: ${port}`);
+    console.log(`🌍 URL: http://localhost:${port}`);
+    console.log(`📚 API Docs: http://localhost:${port}/api/health`);
+    console.log('========================================\n');
 });
+
+
 
 export default app;
