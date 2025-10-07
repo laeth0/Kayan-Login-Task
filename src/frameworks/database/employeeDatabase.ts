@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { Employee } from './icdDatabase.js';
+import { Employee } from './models/icd_models';
 
 export interface IEmployeeDatabase {
     getAllEmployees(): Promise<Employee[]>;

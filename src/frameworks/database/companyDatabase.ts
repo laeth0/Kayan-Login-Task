@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { Company } from './icdDatabase.js';
+import { Company } from './models/icd_models';
 
 export interface ICompanyDatabase {
     getAllCompanies(): Promise<Company[]>;

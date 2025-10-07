@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { Employee, Company } from './icdDatabase.js';
+import { Employee, Company } from './models/icd_models';
 
 export interface IAuthDatabase {
     getEmployeeByUsername(username: string): Promise<Employee | null>;
