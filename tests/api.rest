@@ -1,0 +1,125 @@
+### Variables
+@baseUrl = http://localhost:3000/api
+@authToken = {{login.response.body.token}}
+
+
+
+### Health Check
+GET {{baseUrl}}/health
+
+### =================== Authentication Tests ===================
+
+### Login with default admin user
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "username": "jane.smith",
+    "password": "password456"
+}
+
+### Register new employee
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+    "name": "Jane Smith",
+    "companyId": 1,
+    "username": "jane.smith",
+    "password": "password456",
+    "active": true
+}
+
+### =================== Company Tests ===================
+
+### Get all companies (Public - No Auth Required)
+GET {{baseUrl}}/companies
+
+### Get company by ID (Public - No Auth Required)
+GET {{baseUrl}}/companies/1
+
+### Create new company (Protected - Auth Required)
+POST {{baseUrl}}/companies
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+    "name": "Innovation Labs",
+    "country": "Canada",
+    "city": "Toronto",
+    "active": true
+}
+
+### Update company (Protected - Auth Required)
+PUT {{baseUrl}}/companies/1
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+    "name": "Tech Solutions Inc Updated",
+    "active": true
+}
+
+### Delete company (Protected - Auth Required)
+DELETE {{baseUrl}}/companies/3
+Authorization: Bearer {{authToken}}
+
+### =================== Employee Tests ===================
+
+### Get all employees (Public - No Auth Required)
+GET {{baseUrl}}/employees
+
+### Get employee by ID (Public - No Auth Required)
+GET {{baseUrl}}/employees/1
+
+### Get employees by company (Public - No Auth Required)
+GET {{baseUrl}}/employees/company/1
+
+### Create new employee (Protected - Auth Required)
+POST {{baseUrl}}/employees
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+    "name": "Alice Johnson",
+    "companyId": 1,
+    "username": "alice.johnson",
+    "password": "password789",
+    "active": true
+}
+
+### Update employee (Protected - Auth Required)
+PUT {{baseUrl}}/employees/2
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+    "name": "Alice Johnson Updated",
+    "active": true
+}
+
+### Delete employee (Protected - Auth Required)
+DELETE {{baseUrl}}/employees/2
+Authorization: Bearer {{authToken}}
+
+### =================== Test Flow Example ===================
+# This is a recommended test flow. Run requests in this order:
+
+# 1. Health Check - Verify API is running
+# 2. Login - Get authentication token
+# 3. Create Company - Create test company
+# 4. Get Companies - Verify company was created
+# 5. Register Employee - Create new employee in the company
+# 6. Get Employees - Verify employee was created
+# 7. Update Company - Modify company details
+# 8. Get Company by ID - Verify company was updated
+# 9. Get Employees by Company - Check company's employees
+# 10. Update Employee - Modify employee details
+# 11. Get Employee by ID - Verify employee was updated
+# 12. Delete Employee - Remove test employee
+# 13. Delete Company - Clean up test company
+
+### Notes:
+# - The @authToken variable is automatically set after login
+# - Replace IDs in URLs with actual IDs from your responses

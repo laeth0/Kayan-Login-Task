@@ -16,7 +16,7 @@ build/
 .env.development
 .env.test
 .env.production
-config.env
+# config.env
 
 # IDE and Editor files
 .vscode/

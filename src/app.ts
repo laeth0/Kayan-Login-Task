@@ -11,6 +11,7 @@ const app = dependencies.framework();
 app.use(dependencies.cors());
 app.use(dependencies.framework.json());
 app.use(dependencies.framework.urlencoded({ extended: true }));
+app.use(dependencies.framework.static('public')); // Serve the HTML interface
 
 app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
